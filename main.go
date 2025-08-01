@@ -34,7 +34,8 @@ func main() {
 	rssCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	rssURL := "https://moxie.foxnews.com/google-publisher/world.xml"
+	// rssURL := "https://moxie.foxnews.com/google-publisher/world.xml"
+	rssURL := "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
 	rss, err := rss.FetchRSS(rssURL, rssCtx)
 	if err != nil {
 		fmt.Println("error fetching RSS:", err)
@@ -70,16 +71,6 @@ func main() {
 			})
 		}
 
-		// Publish to Redis stream if geolocation is missing
-		if !feedItem.GeoLocated {
-			err := redisdb.AddToStream(redisClient, "rss:unprocessed", map[string]any{
-				"id": feedItem.ID,
-			})
-			if err != nil {
-				fmt.Printf("failed to publish to Redis stream: %v", err)
-			}
-		}
-
 		feedItems.Items = append(feedItems.Items, feedItem)
 	}
 
@@ -90,4 +81,18 @@ func main() {
 		return
 	}
 	fmt.Println("feed items saved successfully")
+
+	// Now publish IDs to Redis for geolocation
+	for _, feedItem := range feedItems.Items {
+		if !feedItem.GeoLocated {
+			err := redisdb.AddToStream(redisClient, "rss:unprocessed", map[string]any{
+				"id": feedItem.ID,
+			})
+			if err != nil {
+				fmt.Printf("failed to publish to Redis stream: %v", err)
+			}
+		}
+	}
+
+	fmt.Println("unprocessed feed items published to Redis stream successfully")
 }
