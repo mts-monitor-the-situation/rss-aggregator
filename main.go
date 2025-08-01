@@ -43,9 +43,18 @@ func main() {
 			Description: item.Description,
 			Link:        item.GetLink(),
 			PubDate:     item.PubDate,
-			Categories:  item.AllCategoryDomains(),
+			Categories:  make([]mongodb.Category, 0, len(item.Categories)),
 			GeoLocated:  false,
 		}
+
+		// Convert categories
+		for _, c := range item.Categories {
+			feedItem.Categories = append(feedItem.Categories, mongodb.Category{
+				Domain: c.Domain,
+				Value:  c.Value,
+			})
+		}
+
 		feedItems.Items = append(feedItems.Items, feedItem)
 	}
 

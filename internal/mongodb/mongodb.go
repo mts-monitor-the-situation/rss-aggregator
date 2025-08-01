@@ -59,15 +59,21 @@ func GenId(guid string, link string, pubDate string) string {
 
 // FeedItem represents a single RSS feed item stored in MongoDB
 type FeedItem struct {
-	ID          string   `bson:"_id,omitempty"`
-	Title       string   `bson:"title"`
-	Description string   `bson:"description"`
-	Link        string   `bson:"link"`
-	PubDate     string   `bson:"pubDate"`
-	Categories  []string `bson:"categories"`
-	GeoLocated  bool     `bson:"geoLocated"`
-	Latitude    float64  `bson:"latitude"`
-	Longitude   float64  `bson:"longitude"`
+	ID          string     `bson:"_id,omitempty"`
+	Title       string     `bson:"title"`
+	Description string     `bson:"description"`
+	Link        string     `bson:"link"`
+	PubDate     string     `bson:"pubDate"`
+	Categories  []Category `bson:"categories"`
+	GeoLocated  bool       `bson:"geoLocated"`
+	Latitude    float64    `bson:"latitude"`
+	Longitude   float64    `bson:"longitude"`
+}
+
+// Category represents a category in an RSS item, stored in MongoDB
+type Category struct {
+	Domain string `bson:"domain"`
+	Value  string `bson:"value"`
 }
 
 // FeedItems is a wrapper for a slice of FeedItem for MongoDB operations
