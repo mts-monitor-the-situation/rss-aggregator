@@ -70,6 +70,16 @@ func main() {
 			})
 		}
 
+		// Publish to Redis stream if geolocation is missing
+		if !feedItem.GeoLocated {
+			err := redisdb.AddToStream(redisClient, "rss:unprocessed", map[string]any{
+				"id": feedItem.ID,
+			})
+			if err != nil {
+				fmt.Printf("failed to publish to Redis stream: %v", err)
+			}
+		}
+
 		feedItems.Items = append(feedItems.Items, feedItem)
 	}
 
