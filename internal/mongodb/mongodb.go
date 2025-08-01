@@ -21,6 +21,7 @@ func Connect(uri string) (*mongo.Client, error) {
 	opts.ApplyURI(uri).SetServerAPIOptions(serverAPI)
 	opts.SetConnectTimeout(10 * time.Second)
 
+	// Create a new client and connect to the server
 	client, err := mongo.Connect(opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to MongoDB: %w", err)
