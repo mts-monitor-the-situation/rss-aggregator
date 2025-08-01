@@ -2,10 +2,7 @@ package mongodb
 
 import (
 	"context"
-	"crypto/sha1"
-	"encoding/hex"
 	"fmt"
-	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -39,22 +36,6 @@ func Connect(uri string) (*mongo.Client, error) {
 	}
 
 	return client, nil
-}
-
-// GenId generates a deterministic ID based on guid (if present) and link
-func GenId(guid string, link string, pubDate string) string {
-
-	input := ""
-
-	if strings.TrimSpace(guid) != "" {
-		input = guid + link + pubDate
-	} else {
-		input = link + pubDate
-	}
-
-	hash := sha1.Sum([]byte(input)) // returns [20]byte
-
-	return hex.EncodeToString(hash[:])
 }
 
 // FeedItem represents a single RSS feed item stored in MongoDB

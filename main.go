@@ -50,7 +50,7 @@ func main() {
 	// Process each item in the RSS feed
 	for _, item := range rss.Channel.Items {
 		feedItem := mongodb.FeedItem{
-			ID:          mongodb.GenId(item.Guid, item.GetLink(), item.PubDate),
+			ID:          item.GenId(),
 			Source:      rss.Channel.Title,
 			Title:       item.Title,
 			Description: item.Description,

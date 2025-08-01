@@ -2,6 +2,8 @@ package rss
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -31,6 +33,22 @@ type Item struct {
 	PubDate     string     `xml:"pubDate"`
 	Guid        string     `xml:"guid"`
 	Categories  []Category `xml:"category"`
+}
+
+// GenId generates a unique ID for the FeedItem based on its link and publication date
+func (i *Item) GenId() string {
+
+	input := ""
+
+	if i.Guid != "" {
+		input = i.Guid + i.Links[0] + i.PubDate
+	} else {
+		input = i.Links[0] + i.PubDate
+	}
+
+	// Generate a SHA-1 hash of the input string
+	hash := sha1.Sum([]byte(input)) // returns [20]byte
+	return hex.EncodeToString(hash[:])
 }
 
 // Category represents a category in an RSS item
