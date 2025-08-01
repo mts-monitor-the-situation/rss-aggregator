@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"html"
 	"time"
 
 	"github.com/mts-monitor-the-situation/rss-aggregator/internal/mongodb"
@@ -52,8 +53,8 @@ func main() {
 		feedItem := mongodb.FeedItem{
 			ID:          item.GenId(),
 			Source:      rss.Channel.Title,
-			Title:       item.Title,
-			Description: item.Description,
+			Title:       html.UnescapeString(item.Title),
+			Description: html.UnescapeString(item.Description),
 			Link:        item.GetLink(),
 			PubDate:     item.PubDate,
 			Categories:  make([]mongodb.Category, 0, len(item.Categories)),
