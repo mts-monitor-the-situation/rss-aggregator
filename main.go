@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	//  Connect to MongoDB
+	// Connect to MongoDB
 	mongoURI := "mongodb://localhost:27017"
 	client, err := mongodb.Connect(mongoURI)
 	if err != nil {
