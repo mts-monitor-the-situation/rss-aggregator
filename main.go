@@ -6,10 +6,19 @@ import (
 	"time"
 
 	"github.com/mts-monitor-the-situation/rss-aggregator/internal/mongodb"
+	"github.com/mts-monitor-the-situation/rss-aggregator/internal/redisdb"
 	"github.com/mts-monitor-the-situation/rss-aggregator/pkg/rss"
 )
 
 func main() {
+
+	// Connect to Redis
+	redisClient, err := redisdb.Connect("localhost:6379")
+	if err != nil {
+		fmt.Printf("error connecting to Redis: %v", err)
+		return
+	}
+	defer redisClient.Close()
 
 	// Connect to MongoDB
 	mongoURI := "mongodb://localhost:27017"
