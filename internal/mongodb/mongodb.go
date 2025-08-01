@@ -71,11 +71,11 @@ type FeedItems struct {
 }
 
 // Save saves the FeedItems to the MongoDB collection
-func (f *FeedItems) Save(ctx context.Context, collection *mongo.Collection) error {
+func (f *FeedItems) Save(ctx context.Context, collection *mongo.Collection) ([]string, error) {
 
 	// Ensure there are items to save
 	if len(f.Items) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	// Prepare bulk write models for upsert
@@ -91,10 +91,18 @@ func (f *FeedItems) Save(ctx context.Context, collection *mongo.Collection) erro
 	}
 
 	// Perform the bulk write operation
-	_, err := collection.BulkWrite(ctx, models, options.BulkWrite().SetOrdered(false))
+	bkRes, err := collection.BulkWrite(ctx, models, options.BulkWrite().SetOrdered(false))
 	if err != nil {
-		return fmt.Errorf("bulk write failed: %w", err)
+		return nil, fmt.Errorf("bulk write failed: %w", err)
 	}
 
-	return nil
+	// Collect the IDs of upserted items
+	ids := make([]string, 0, len(bkRes.UpsertedIDs))
+	for _, upsertedID := range bkRes.UpsertedIDs {
+		if idStr, ok := upsertedID.(string); ok {
+			ids = append(ids, idStr)
+		}
+	}
+
+	return ids, nil
 }

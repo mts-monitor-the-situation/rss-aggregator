@@ -35,7 +35,8 @@ func main() {
 	defer cancel()
 
 	// rssURL := "https://moxie.foxnews.com/google-publisher/world.xml"
-	rssURL := "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
+	rssURL := "https://feeds.bbci.co.uk/news/world/rss.xml"
+	// rssURL := "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
 	rss, err := rss.FetchRSS(rssURL, rssCtx)
 	if err != nil {
 		fmt.Println("error fetching RSS:", err)
@@ -75,24 +76,42 @@ func main() {
 	}
 
 	// Save feed items to MongoDB
-	err = feedItems.Save(rssCtx, collection)
+	ids, err := feedItems.Save(rssCtx, collection)
 	if err != nil {
 		fmt.Println("error saving feed items:", err)
 		return
 	}
-	fmt.Println("feed items saved successfully")
 
-	// Now publish IDs to Redis for geolocation
-	for _, feedItem := range feedItems.Items {
-		if !feedItem.GeoLocated {
-			err := redisdb.AddToStream(redisClient, "rss:unprocessed", map[string]any{
-				"id": feedItem.ID,
-			})
-			if err != nil {
-				fmt.Printf("failed to publish to Redis stream: %v", err)
-			}
+	unprocessedFeedLength := len(ids)
+	if unprocessedFeedLength == 0 {
+		fmt.Println("no feed items to save")
+		return
+	}
+
+	fmt.Printf("saved %d feed items to MongoDB\n", unprocessedFeedLength)
+
+	// Publish only upserted IDs to Redis stream
+	for _, id := range ids {
+		fmt.Printf("publishing ID to Redis stream: %s\n", id)
+		err := redisdb.AddToStream(redisClient, "rss:unprocessed", map[string]any{
+			"id": id,
+		})
+		if err != nil {
+			fmt.Printf("failed to publish to Redis stream: %v", err)
 		}
 	}
+
+	// // Now publish IDs to Redis for geolocation
+	// for _, feedItem := range feedItems.Items {
+	// 	if !feedItem.GeoLocated {
+	// 		err := redisdb.AddToStream(redisClient, "rss:unprocessed", map[string]any{
+	// 			"id": feedItem.ID,
+	// 		})
+	// 		if err != nil {
+	// 			fmt.Printf("failed to publish to Redis stream: %v", err)
+	// 		}
+	// 	}
+	// }
 
 	fmt.Println("unprocessed feed items published to Redis stream successfully")
 }
