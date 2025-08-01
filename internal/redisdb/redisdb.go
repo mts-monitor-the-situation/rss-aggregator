@@ -2,6 +2,7 @@ package redisdb
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -24,4 +25,19 @@ func Connect(addr string) (*redis.Client, error) {
 	}
 
 	return client, nil
+}
+
+// AddToStream adds a message to a Redis stream with the specified name.
+func AddToStream(client *redis.Client, streamName string, message map[string]any) error {
+	ctx := context.Background()
+	_, err := client.XAdd(ctx, &redis.XAddArgs{
+		Stream: streamName,
+		Values: message,
+	}).Result()
+
+	if err != nil {
+		return fmt.Errorf("failed to add message to stream %s: %w", streamName, err)
+	}
+
+	return nil
 }
