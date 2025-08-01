@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	mongodb "github.com/mts-monitor-the-situation/rss-aggregator/internal/mongodb"
+	"github.com/mts-monitor-the-situation/rss-aggregator/internal/mongodb"
 	"github.com/mts-monitor-the-situation/rss-aggregator/pkg/rss"
 )
 
