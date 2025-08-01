@@ -59,7 +59,8 @@ func GenId(guid string, link string, pubDate string) string {
 
 // FeedItem represents a single RSS feed item stored in MongoDB
 type FeedItem struct {
-	ID          string     `bson:"_id,omitempty"`
+	ID          string     `bson:"_id"`
+	Source      string     `bson:"source"`
 	Title       string     `bson:"title"`
 	Description string     `bson:"description"`
 	Link        string     `bson:"link"`

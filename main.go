@@ -31,14 +31,18 @@ func main() {
 		return
 	}
 
+	// Print the RSS title
+	fmt.Println("RSS Title:", rss.Channel.Title)
+
 	// Create a feed items collection
 	collection := client.Database("mts").Collection("feed_items")
 	feedItems := mongodb.FeedItems{}
 
-	fmt.Println("RSS Title:", rss.Channel.Title)
+	// Process each item in the RSS feed
 	for _, item := range rss.Channel.Items {
 		feedItem := mongodb.FeedItem{
 			ID:          mongodb.GenId(item.Guid, item.GetLink(), item.PubDate),
+			Source:      rss.Channel.Title,
 			Title:       item.Title,
 			Description: item.Description,
 			Link:        item.GetLink(),
@@ -58,6 +62,7 @@ func main() {
 		feedItems.Items = append(feedItems.Items, feedItem)
 	}
 
+	// Save feed items to MongoDB
 	err = feedItems.Save(rssCtx, collection)
 	if err != nil {
 		fmt.Println("error saving feed items:", err)
