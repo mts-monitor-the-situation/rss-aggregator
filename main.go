@@ -5,24 +5,54 @@ import (
 	"fmt"
 	"time"
 
+	mongodb "github.com/mts-monitor-the-situation/rss-aggregator/internal/mongodb"
 	"github.com/mts-monitor-the-situation/rss-aggregator/pkg/rss"
 )
 
 func main() {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	//  Connect to MongoDB
+	mongoURI := "mongodb://localhost:27017"
+	client, err := mongodb.Connect(mongoURI)
+	if err != nil {
+		fmt.Printf("error connecting to MongoDB: %v", err)
+		return
+	}
+	defer client.Disconnect(context.Background())
+
+	// RSS logic
+	rssCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Example usage of the RSS package
 	rssURL := "https://moxie.foxnews.com/google-publisher/world.xml"
-	rss, err := rss.FetchRSS(rssURL, ctx)
+	rss, err := rss.FetchRSS(rssURL, rssCtx)
 	if err != nil {
-		fmt.Println("Error fetching RSS:", err)
+		fmt.Println("error fetching RSS:", err)
 		return
 	}
 
+	// Create a feed items collection
+	collection := client.Database("mts").Collection("feed_items")
+	feedItems := mongodb.FeedItems{}
+
 	fmt.Println("RSS Title:", rss.Channel.Title)
 	for _, item := range rss.Channel.Items {
-		fmt.Printf("Item: %s, Link: %s\n", item.Title, item.GetLink())
+		feedItem := mongodb.FeedItem{
+			ID:          mongodb.GenId(item.Guid, item.GetLink(), item.PubDate),
+			Title:       item.Title,
+			Description: item.Description,
+			Link:        item.GetLink(),
+			PubDate:     item.PubDate,
+			Categories:  item.AllCategoryDomains(),
+			GeoLocated:  false,
+		}
+		feedItems.Items = append(feedItems.Items, feedItem)
 	}
+
+	err = feedItems.Save(rssCtx, collection)
+	if err != nil {
+		fmt.Println("error saving feed items:", err)
+		return
+	}
+	fmt.Println("Feed items saved successfully")
 }

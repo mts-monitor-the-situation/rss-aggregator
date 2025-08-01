@@ -1,10 +1,14 @@
-package mongo
+package mongodb
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -37,6 +41,23 @@ func Connect(uri string) (*mongo.Client, error) {
 	return client, nil
 }
 
+// GenId generates a deterministic ID based on guid (if present) and link
+func GenId(guid string, link string, pubDate string) string {
+
+	input := ""
+
+	if strings.TrimSpace(guid) != "" {
+		input = guid + link + pubDate
+	} else {
+		input = link + pubDate
+	}
+
+	hash := sha1.Sum([]byte(input)) // returns [20]byte
+
+	return hex.EncodeToString(hash[:])
+}
+
+// FeedItem represents a single RSS feed item stored in MongoDB
 type FeedItem struct {
 	ID          string   `bson:"_id,omitempty"`
 	Title       string   `bson:"title"`
@@ -47,4 +68,32 @@ type FeedItem struct {
 	GeoLocated  bool     `bson:"geoLocated"`
 	Latitude    float64  `bson:"latitude"`
 	Longitude   float64  `bson:"longitude"`
+}
+
+// FeedItems is a wrapper for a slice of FeedItem for MongoDB operations
+type FeedItems struct {
+	Items []FeedItem `bson:"items"`
+}
+
+// Save saves the FeedItems to the MongoDB collection
+func (f *FeedItems) Save(ctx context.Context, collection *mongo.Collection) error {
+	if len(f.Items) == 0 {
+		return nil
+	}
+
+	var models []mongo.WriteModel
+	for _, item := range f.Items {
+		model := mongo.NewUpdateOneModel().
+			SetFilter(bson.M{"_id": item.ID}).
+			SetUpdate(bson.M{"$set": item}).
+			SetUpsert(true)
+
+		models = append(models, model)
+	}
+
+	_, err := collection.BulkWrite(ctx, models, options.BulkWrite().SetOrdered(false))
+	if err != nil {
+		return fmt.Errorf("bulk write failed: %w", err)
+	}
+	return nil
 }
