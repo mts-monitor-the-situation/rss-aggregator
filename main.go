@@ -60,8 +60,6 @@ func main() {
 			Link:        item.GetLink(),
 			PubDate:     item.PubDate,
 			Categories:  make([]mongodb.Category, 0, len(item.Categories)),
-			GeoLocated:  false,
-			Coordinates: nil, // Initialize Coordinates as nil
 		}
 
 		// Convert categories
