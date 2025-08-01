@@ -65,11 +65,15 @@ type FeedItems struct {
 
 // Save saves the FeedItems to the MongoDB collection
 func (f *FeedItems) Save(ctx context.Context, collection *mongo.Collection) error {
+
+	// Ensure there are items to save
 	if len(f.Items) == 0 {
 		return nil
 	}
 
-	var models []mongo.WriteModel
+	// Prepare bulk write models for upsert
+	models := make([]mongo.WriteModel, 0, len(f.Items))
+
 	for _, item := range f.Items {
 		model := mongo.NewUpdateOneModel().
 			SetFilter(bson.M{"_id": item.ID}).
@@ -79,9 +83,11 @@ func (f *FeedItems) Save(ctx context.Context, collection *mongo.Collection) erro
 		models = append(models, model)
 	}
 
+	// Perform the bulk write operation
 	_, err := collection.BulkWrite(ctx, models, options.BulkWrite().SetOrdered(false))
 	if err != nil {
 		return fmt.Errorf("bulk write failed: %w", err)
 	}
+
 	return nil
 }
