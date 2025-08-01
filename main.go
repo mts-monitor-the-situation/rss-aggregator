@@ -89,5 +89,5 @@ func main() {
 		fmt.Println("error saving feed items:", err)
 		return
 	}
-	fmt.Println("Feed items saved successfully")
+	fmt.Println("feed items saved successfully")
 }
