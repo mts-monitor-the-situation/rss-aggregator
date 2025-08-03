@@ -90,26 +90,21 @@ func main() {
 
 	// Publish only upserted IDs to Redis stream
 	for _, id := range ids {
-		fmt.Printf("publishing ID to Redis stream: %s\n", id)
-		err := redisdb.AddToStream(redisClient, "rss:unprocessed", map[string]any{
-			"id": id,
-		})
-		if err != nil {
-			fmt.Printf("failed to publish to Redis stream: %v", err)
+		// Filter feed items by ID
+		for _, feedItem := range feedItems.Items {
+			if feedItem.ID == id {
+				fmt.Printf("publishing ID to Redis stream: %s\n", id)
+				err := redisdb.AddToStream(redisClient, "rss:unprocessed", map[string]any{
+					"id":          id,
+					"title":       feedItem.Title,
+					"description": feedItem.Description,
+				})
+				if err != nil {
+					fmt.Printf("failed to publish to Redis stream: %v", err)
+				}
+			}
 		}
 	}
-
-	// // Now publish IDs to Redis for geolocation
-	// for _, feedItem := range feedItems.Items {
-	// 	if !feedItem.GeoLocated {
-	// 		err := redisdb.AddToStream(redisClient, "rss:unprocessed", map[string]any{
-	// 			"id": feedItem.ID,
-	// 		})
-	// 		if err != nil {
-	// 			fmt.Printf("failed to publish to Redis stream: %v", err)
-	// 		}
-	// 	}
-	// }
 
 	fmt.Println("unprocessed feed items published to Redis stream successfully")
 }
