@@ -31,7 +31,7 @@ test: fmt vet ## Run the tests
 
 
 .PHONY: build
-build: ## Build the application for the native architecture
+build: fmt vet ## Build the application for the native architecture
 	 CGO_ENABLED=0 go build -v -trimpath -tags netgo -ldflags="-s -w" -o ${NAME} main.go
 
 

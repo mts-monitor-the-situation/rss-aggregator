@@ -53,6 +53,15 @@ jobs:
       #     echo "revision=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       #     echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Build
+        run: make build
+        shell: bash
       # - name: Update Helm Chart's README
       #   run: make hreadme
       #   shell: bash
