@@ -29,6 +29,7 @@ func (c *Config) validate() error {
 	return nil
 }
 
+// Load reads the configuration from the provided byte slice and returns a Config instance.
 func Load(data []byte) (*Config, error) {
 	// Create a strict YAML decoder
 	decoder := yaml.NewDecoder(bytes.NewReader(data))
