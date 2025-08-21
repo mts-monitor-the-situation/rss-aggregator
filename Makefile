@@ -14,7 +14,7 @@ help: ## Display this help
 
 .PHONY: run
 run: ## Run the application with cli arguments: config.yml secrets 8080
-	go run main.go
+	go run main.go config.yaml
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
