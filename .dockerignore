@@ -4,3 +4,4 @@ Makefile
 config.yaml
 LICENSE
 Dockerfile
+.github/

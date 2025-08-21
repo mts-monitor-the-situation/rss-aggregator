@@ -1,0 +1,167 @@
+name: Create Latest Release
+
+permissions:
+  contents: write
+  packages: write
+  attestations: write
+  id-token: write
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.go'
+      - 'Makefile'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/create-latest-release.yml'
+      - 'charts/Chart.yaml'
+      - 'charts/values.yaml'
+      - 'charts/templates/**'
+      - 'Dockerfile'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # test:
+  #   name: Unit Tests
+  #   uses: mts-monitor-the-situation/rss-aggregator/.github/workflows/run-test.yml@main
+
+  build:
+    # needs: test
+    name: Build Latest Release
+    runs-on: ubuntu-latest
+    env:
+      # HELM_PATH: ${{ github.workspace }}/rss-aggregator-v0.0.0-latest.tgz
+      VERSION: v0.0.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      # - name: Get Build Info
+      #   id: build-info
+      #   run: |
+      #     echo "revision=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      #     echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
+      # - name: Update Helm Chart's README
+      #   run: make hreadme
+      #   shell: bash
+
+      # - name: Get GitHub App Token
+      #   uses: actions/create-github-app-token@v2
+      #   id: app-token
+      #   with:
+      #     owner: ${{ github.repository_owner }}
+      #     repositories: ${{ github.event.repository.name }}
+      #     app-id: ${{ vars.TOKEN_APP_ID }}
+      #     private-key: ${{ secrets.TOKEN_APP_PRIVATE_KEY }}
+
+      # - name: Update Helm Chart README
+      #   uses: mts-monitor-the-situation/github-actions/commit@main
+      #   with:
+      #     path: charts/README.md
+      #     message: "Update Helm Chart's README"
+      #   env:
+      #     GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      # - name: Setup Helm
+      #   uses: azure/setup-helm@v4.3.0
+
+      # - name: Package Helm Chart
+      #   run: helm package ./charts
+      #   shell: bash
+
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Login to GitHub Container Registry
+      - name: Registry Login
+        uses: docker/login-action@v3.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          logout: true
+
+      # - name: Publish Helm OCI Chart
+      #   run: helm push $HELM_PATH oci://ghcr.io/${{ github.repository }}
+      #   shell: bash
+      #   env:
+      #     HELM_EXPERIMENTAL_OCI: 1
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          # build-args: |
+          #   VERSION=${{ env.VERSION }}
+          #   REVISION=${{ steps.build-info.outputs.revision }}
+          #   BUILD_DATE=${{ steps.build-info.outputs.build_date }}
+          platforms: linux/amd64
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+          push: true
+          sbom: true
+          provenance: mode=min
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          annotations: ${{ steps.meta.outputs.annotations }}
+
+      - name: Attest
+        uses: actions/attest-build-provenance@v2.4.0
+        id: attest
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Update "Latest" Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          # Check if "latest" release exists
+          gh release view latest 2>&1 && RELEASE_EXISTS=true || RELEASE_EXISTS=false
+
+          if [ "$RELEASE_EXISTS" = "true" ]; then
+            # If "latest" release exists, upload new assets to it using --clobber to overwrite existing ones
+            gh release delete latest --cleanup-tag -y && \
+            gh release create latest \
+              $HELM_PATH \
+              -t "Latest Release" \
+              -n "Auto-generated release for the latest successful build." \
+              --target $BRANCH_NAME \
+              --latest=false \
+              --generate-notes
+          else
+            # If "latest" release doesn't exist, create it and upload assets
+            gh release create latest \
+              $HELM_PATH \
+              -t "Latest Release" \
+              -n "Auto-generated release for the latest successful build." \
+              --target $BRANCH_NAME \
+              --generate-notes
+          fi

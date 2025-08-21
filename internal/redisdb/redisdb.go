@@ -13,6 +13,7 @@ func Connect(addr string) (*redis.Client, error) {
 
 	client := redis.NewClient(&redis.Options{
 		Addr: addr,
+		DB:   0,
 	})
 
 	// Test the connection
