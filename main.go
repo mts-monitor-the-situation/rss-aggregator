@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"html"
+	"os"
 	"time"
 
+	"github.com/mts-monitor-the-situation/rss-aggregator/internal/config"
 	"github.com/mts-monitor-the-situation/rss-aggregator/internal/mongodb"
 	"github.com/mts-monitor-the-situation/rss-aggregator/internal/redisdb"
 	"github.com/mts-monitor-the-situation/rss-aggregator/pkg/rss"
@@ -13,8 +15,33 @@ import (
 
 func main() {
 
+	ConfigPath := ""
+
+	// For development purposes
+	if len(os.Args) == 2 {
+		ConfigPath = os.Args[1]
+	}
+
+	// For production
+	if ConfigPath == "" {
+		ConfigPath = "/etc/rss-aggregator/config.yaml"
+	}
+
+	// Load the config
+	configData, err := os.ReadFile(ConfigPath)
+	if err != nil {
+		fmt.Printf("error reading config file: %v", err)
+		return
+	}
+
+	c, err := config.Load(configData)
+	if err != nil {
+		fmt.Printf("error loading config: %v", err)
+		return
+	}
+
 	// Connect to Redis
-	redisClient, err := redisdb.Connect("localhost:6379")
+	redisClient, err := redisdb.Connect(c.RedisConnectionString)
 	if err != nil {
 		fmt.Printf("error connecting to Redis: %v", err)
 		return
@@ -22,8 +49,7 @@ func main() {
 	defer redisClient.Close()
 
 	// Connect to MongoDB
-	mongoURI := "mongodb://localhost:27017"
-	client, err := mongodb.Connect(mongoURI)
+	client, err := mongodb.Connect(c.MongoDBConnectionString)
 	if err != nil {
 		fmt.Printf("error connecting to MongoDB: %v", err)
 		return

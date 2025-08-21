@@ -1,0 +1,13 @@
+services:
+  redis:
+   image: redis:latest
+   ports:
+     - published: 6379
+       target: 6379
+       protocol: tcp
+  mongodb:
+   image: mongo:latest
+   ports:
+     - published: 27017
+       target: 27017
+       protocol: tcp
