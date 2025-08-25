@@ -2,6 +2,8 @@ package rss
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestItemGenId(t *testing.T) {
@@ -28,10 +30,9 @@ func TestItemGenId(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
 			id := tc.item.GenId()
-			if id == "" {
-				t.Errorf("Expected non-empty ID, got empty")
-			}
+			assert.NotEmpty(id)
 		})
 	}
 
