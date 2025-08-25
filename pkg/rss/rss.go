@@ -57,8 +57,6 @@ type Category struct {
 	Value  string `xml:",chardata"`
 }
 
-// ---- Methods for RSS Parsing and Access ----
-
 // GetLink returns the primary link from the item
 func (i Item) GetLink() string {
 	if len(i.Links) > 0 {
