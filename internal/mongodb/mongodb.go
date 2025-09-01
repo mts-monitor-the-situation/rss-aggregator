@@ -41,15 +41,15 @@ func Connect(uri string) (*mongo.Client, error) {
 
 // FeedItem represents a single RSS feed item stored in MongoDB
 type FeedItem struct {
-	ID          string       `bson:"_id"`
-	Source      string       `bson:"source"`
-	Title       string       `bson:"title"`
-	Description string       `bson:"description"`
-	Link        string       `bson:"link"`
-	PubDate     string       `bson:"pubDate"`
-	Categories  []Category   `bson:"categories"`
-	GeoLocated  bool         `bson:"geoLocated"`
-	Coordinates []Coordinate `bson:"coordinates"`
+	ID          string     `bson:"_id"`
+	Source      string     `bson:"source"`
+	Title       string     `bson:"title"`
+	Description string     `bson:"description"`
+	Link        string     `bson:"link"`
+	PubDate     string     `bson:"pubDate"`
+	Categories  []Category `bson:"categories"`
+	GeoLocated  bool       `bson:"geoLocated"`
+	Locations   []Location `bson:"locations"`
 }
 
 // Category represents a category in an RSS item, stored in MongoDB
@@ -58,11 +58,11 @@ type Category struct {
 	Value  string `bson:"value"`
 }
 
-// Coordinate represents a geographical coordinate of an RSS item, stored in MongoDB
-type Coordinate struct {
-	Location  string  `bson:"location"`
+// Location represents a geographical location of an RSS item, stored in MongoDB
+type Location struct {
 	Latitude  float64 `bson:"latitude"`
 	Longitude float64 `bson:"longitude"`
+	PlaceID   string  `bson:"placeId"`
 }
 
 // FeedItems is a wrapper for a slice of FeedItem for MongoDB operations
