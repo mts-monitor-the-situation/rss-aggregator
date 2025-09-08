@@ -140,7 +140,7 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
 
       - name: Attest
-        uses: actions/attest-build-provenance@v2.4.0
+        uses: actions/attest-build-provenance@v3.0.0
         id: attest
         with:
           subject-name: ghcr.io/${{ github.repository }}
