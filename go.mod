@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/redis/go-redis/v9 v9.14.0
-	go.mongodb.org/mongo-driver/v2 v2.3.0
+	go.mongodb.org/mongo-driver/v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
