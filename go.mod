@@ -3,7 +3,7 @@ module github.com/mts-monitor-the-situation/rss-aggregator
 go 1.24.4
 
 require (
-	github.com/redis/go-redis/v9 v9.16.0
+	github.com/redis/go-redis/v9 v9.17.0
 	go.mongodb.org/mongo-driver/v2 v2.4.0
 	gopkg.in/yaml.v2 v2.4.0
 )
